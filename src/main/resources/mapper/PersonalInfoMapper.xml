@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.nowcoder.dao.PersonInfoMapper">
+
+    <insert id="insertPerson" parameterType="com.example.nowcoder.entity.PersonInfo">
+        INSERT INTO person_info (name, gender, age, occupation, department_id)
+        VALUES (#{name}, #{gender}, #{age}, #{occupation}, #{departmentId})
+    </insert>
+
+    <!-- 删除个人信息（逻辑删除） -->
+    <update id="softDeletePerson" parameterType="com.example.nowcoder.entity.PersonInfo">
+        UPDATE person_info
+        SET is_deleted = 1
+        WHERE name = #{name} and gender = #{gender}
+    </update>
+
+    <!-- 修改个人信息 -->
+    <update id="updatePerson" parameterType="com.example.nowcoder.entity.PersonInfo">
+        UPDATE person_info
+        SET
+        <if test="name != null">name = #{name},</if>
+        <if test="gender != null">gender = #{gender},</if>
+        <if test="age != null">age = #{age},</if>
+        <if test="occupation != null">occupation = #{occupation},</if>
+        <if test="departmentId != null">department_id = #{departmentId}</if>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据姓名、性别、年龄、部门（单个）查询个人信息 -->
+    <select id="selectPersonsByConditions" resultType="com.example.nowcoder.entity.PersonInfo">
+        SELECT id, name, gender, age, occupation, department_id, is_deleted
+        FROM person_info
+        WHERE
+        <if test="name != null">name = #{name}</if>
+        <if test="gender != null">AND gender = #{gender}</if>
+        <if test="age != null">AND age = #{age}</if>
+        <if test="department != null">AND department_id IN (SELECT id FROM department_info WHERE department_name = #{department})</if>
+    </select>
+
+</mapper>
