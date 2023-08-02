@@ -12,6 +12,18 @@ public class PersonInfo {
     private Integer departmentId;
     private boolean isDeleted;
 
+    public PersonInfo() {
+    }
+
+    public PersonInfo(int id, String name, String gender, Integer age, String occupation, Integer departmentId) {
+        this.id = id;
+        this.name = name;
+        this.gender = gender;
+        this.age = age;
+        this.occupation = occupation;
+        this.departmentId = departmentId;
+    }
+
     public void setId(int id) {
         this.id = id;
     }
