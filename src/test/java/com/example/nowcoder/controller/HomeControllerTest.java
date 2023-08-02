@@ -2,174 +2,129 @@ package com.example.nowcoder.controller;
 
 import com.example.nowcoder.entity.PersonInfo;
 import com.example.nowcoder.service.PersonalInfoService;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.modules.junit4.PowerMockRunner;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.util.ArrayList;
 import java.util.List;
 
-class HomeControllerTest {
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.when;
 
-    @Mock
-    private PersonalInfoService personalInfoService;
+@RunWith(PowerMockRunner.class)
+public class HomeControllerTest {
 
     @InjectMocks
     private HomeController homeController;
 
-    public HomeControllerTest() {
-        MockitoAnnotations.initMocks(this);
+    @Mock
+    private PersonalInfoService personalInfoService;
+
+    private MockHttpServletRequest request;
+    private MockHttpServletResponse response;
+
+    @Before
+    public void setUp() {
+        request = new MockHttpServletRequest();
+        response = new MockHttpServletResponse();
     }
 
     @Test
-    void testInsert() {
-        // 创建测试用例
+    public void testInsert() {
         PersonInfo personInfo = new PersonInfo();
         personInfo.setName("John");
         personInfo.setGender("Male");
 
-        // 设置模拟对象的行为
-        when(personalInfoService.insertPersonInfo(personInfo)).thenReturn(true);
+        // Mocking the service method
+        when(personalInfoService.insertPersonInfo(any(PersonInfo.class))).thenReturn(true);
 
-        // 调用被测试的方法
+        // Invoke the insert method
         String result = homeController.insert(personInfo);
 
-        // 验证结果是否符合预期
+        // Assert the result
         assertEquals("true", result);
     }
 
     @Test
-    void testDelete() {
-        // 创建测试用例
+    public void testInsertNoName() {
         PersonInfo personInfo = new PersonInfo();
-        personInfo.setId(1); // 假设要删除id为1的人员信息
+        personInfo.setGender("Male");
 
-        // 设置模拟对象的行为
-        when(personalInfoService.softDeletePerson(personInfo)).thenReturn(1); // 假设删除成功，返回受影响的行数
+        // Invoke the insert method
+        String result = homeController.insert(personInfo);
 
-        // 调用被测试的方法
+        // Assert the result
+        assertEquals("No name entered.", result);
+    }
+
+    @Test
+    public void testInsertNoGender() {
+        PersonInfo personInfo = new PersonInfo();
+        personInfo.setName("John");
+
+        // Invoke the insert method
+        String result = homeController.insert(personInfo);
+
+        // Assert the result
+        assertEquals("No gender entered", result);
+    }
+
+    @Test
+    public void testDelete() {
+        PersonInfo personInfo = new PersonInfo();
+        personInfo.setId(1);
+
+        // Mocking the service method
+        when(personalInfoService.softDeletePerson(any(PersonInfo.class))).thenReturn(1);
+
+        // Invoke the delete method
         int result = homeController.delete(personInfo);
 
-        // 验证结果是否符合预期
+        // Assert the result
         assertEquals(1, result);
     }
 
     @Test
-    void testUpdate() {
-        // 创建测试用例
+    public void testUpdate() {
         PersonInfo personInfo = new PersonInfo();
-        personInfo.setId(1); // 假设要更新id为1的人员信息
-        personInfo.setAge(30); // 假设要修改年龄为30
+        personInfo.setId(1);
 
-        // 设置模拟对象的行为
-        when(personalInfoService.updatePersonInfo(personInfo)).thenReturn(1); // 假设更新成功，返回受影响的行数
+        // Mocking the service method
+        when(personalInfoService.updatePersonInfo(any(PersonInfo.class))).thenReturn(1);
 
-        // 调用被测试的方法
+        // Invoke the update method
         int result = homeController.update(personInfo);
 
-        // 验证结果是否符合预期
+        // Assert the result
         assertEquals(1, result);
     }
 
     @Test
-    void testSelectPersonsByConditions() {
-        // 创建测试用例
+    public void testSelectPersonsByConditions() {
         String name = "John";
         String gender = "Male";
         Integer age = 30;
-        String department = "IT";
+        String department = "Engineering";
 
-        // 创建模拟的查询结果
-        List<PersonInfo> mockResult = new ArrayList<>();
-        // 假设数据库查询结果
-        mockResult.add(new PersonInfo(1, "John", "Male", 30, "Engineer", 1));
-        mockResult.add(new PersonInfo(2, "John", "Male", 25, "Developer", 2));
+        List<PersonInfo> mockPersonList = new ArrayList<>();
+        // Add some mock PersonInfo objects to the list
 
-        // 设置模拟对象的行为
-        when(personalInfoService.selectPersonsByConditions(name, gender, age, department)).thenReturn(mockResult);
+        // Mocking the service method
+        when(personalInfoService.selectPersonsByConditions(eq(name), eq(gender), eq(age), eq(department))).thenReturn(mockPersonList);
 
-        // 调用被测试的方法
+        // Invoke the select method
         List<PersonInfo> result = homeController.selectPersonsByConditions(name, gender, age, department);
 
-        // 验证结果是否符合预期
-        assertEquals(mockResult, result);
+        // Assert the result
+        assertEquals(mockPersonList, result);
     }
 }
-
-
-//import com.example.nowcoder.entity.PersonInfo;
-//import com.example.nowcoder.service.PersonalInfoService;
-//import org.junit.jupiter.api.BeforeEach;
-//import org.junit.jupiter.api.Test;
-//import org.mockito.InjectMocks;
-//import org.mockito.Mock;
-//import org.mockito.MockitoAnnotations;
-//
-//import static org.junit.jupiter.api.Assertions.assertEquals;
-//import static org.mockito.Mockito.*;
-//
-//public class HomeControllerTest {
-//
-//    // 使用Mockito创建 PersonalInfoService 的模拟对象
-//    @Mock
-//    private PersonalInfoService personalInfoService;
-//
-//    // 要测试的 HomeController 对象
-//    @InjectMocks
-//    private HomeController homeController;
-//
-//    // 初始化测试环境
-//    @BeforeEach
-//    public void setUp() {
-//        MockitoAnnotations.initMocks(this);
-//    }
-//
-//    @Test
-//    public void testInsertWithNameAndGender() {
-//        // 模拟输入参数
-//        PersonInfo personInfo = new PersonInfo();
-//        personInfo.setName("John");
-//        personInfo.setGender("Male");
-//
-//        // 当调用 personalInfoService.insertPersonInfo() 时返回 true
-//        when(personalInfoService.insertPersonInfo(personInfo)).thenReturn(true);
-//
-//        // 调用被测试的方法
-//        String result = homeController.insert(personInfo);
-//
-//        // 验证结果是否符合预期
-//        assertEquals("true", result);
-//    }
-//
-//    @Test
-//    public void testInsertWithNoName() {
-//        // 模拟输入参数
-//        PersonInfo personInfo = new PersonInfo();
-//        personInfo.setGender("Male");
-//
-//        // 调用被测试的方法
-//        String result = homeController.insert(personInfo);
-//
-//        // 验证结果是否符合预期
-//        assertEquals("No name entered.", result);
-//    }
-//
-//    @Test
-//    public void testInsertWithNoGender() {
-//        // 模拟输入参数
-//        PersonInfo personInfo = new PersonInfo();
-//        personInfo.setName("John");
-//
-//        // 调用被测试的方法
-//        String result = homeController.insert(personInfo);
-//
-//        // 验证结果是否符合预期
-//        assertEquals("No gender entered", result);
-//    }
-//
-//    // 其他方法的测试类似，可以模拟 personalInfoService 的返回值，验证结果是否符合预期
-//}
