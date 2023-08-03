@@ -35,6 +35,9 @@ public class PersonalInfoService {
     }
 
     public int softDeletePerson(PersonInfo personInfo){
+        if(personInfo.getName() == null){
+            return 0;
+        }
         try {
             return personInfoMapper.softDeletePerson(personInfo);
         }catch (Exception e){

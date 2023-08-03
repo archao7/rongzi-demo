@@ -1,5 +1,7 @@
 # 需求理解
 
+![image-20230803133922516](/Users/arches/Library/Application Support/typora-user-images/image-20230803133922516.png)
+
 
 
 # demo说明文档
@@ -39,21 +41,24 @@ CREATE TABLE department (
 假设Mapper接口名为`PersonMapper`。
 
 ```java
-public interface PersonMapper {
-    // 添加个人信息
-    int insertPerson(Person person);
+@Mapper
+public interface PersonInfoMapper {
+    // 新增个人信息
+    boolean insertPerson(PersonInfo person);
 
     // 删除个人信息（逻辑删除）
-    int deletePersonById(int id);
+    int softDeletePerson(PersonInfo person);
 
     // 修改个人信息
-    int updatePerson(Person person);
+    int updatePerson(PersonInfo person);
 
     // 根据姓名、性别、年龄、部门（单个）查询个人信息
-    List<Person> getPersonsByNameGenderAgeDepartment(@Param("name") String name,
-                                                     @Param("gender") String gender,
-                                                     @Param("age") Integer age,
-                                                     @Param("department") String department);
+    List<PersonInfo> selectPersonsByConditions(String name, String gender, Integer age, String department);
+
+    // 根据姓名、性别、年龄、部门（单个）查询个人信（分页）
+    List<PersonInfo> selectPersonsByConditionsLimited(String name, String gender, Integer age, String department,
+                                                      Integer offSet, Integer pagesize);
+
 }
 ```
 
@@ -73,56 +78,53 @@ public class Person {
 **3. XML配置文件 `PersonMapper.xml`：**
 
 ```xml
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper
-  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-
-<mapper namespace="com.example.mapper.PersonMapper">
-    <!-- 添加个人信息 -->
-    <insert id="insertPerson" parameterType="com.example.model.Person" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO person (name, gender, age, occupation)
-        VALUES (#{name}, #{gender}, #{age}, #{occupation})
+   <insert id="insertPerson" parameterType="com.example.nowcoder.entity.PersonInfo">
+        INSERT INTO person_info (name, gender, age, occupation, department_id)
+        VALUES (#{name}, #{gender}, #{age}, #{occupation}, #{departmentId})
     </insert>
 
     <!-- 删除个人信息（逻辑删除） -->
-    <update id="deletePersonById">
-        UPDATE person
+    <update id="softDeletePerson" parameterType="com.example.nowcoder.entity.PersonInfo">
+        UPDATE person_info
         SET is_deleted = 1
-        WHERE id = #{id}
+        WHERE name = #{name} and gender = #{gender}
     </update>
 
     <!-- 修改个人信息 -->
-    <update id="updatePerson">
-        UPDATE person
+    <update id="updatePerson" parameterType="com.example.nowcoder.entity.PersonInfo">
+        UPDATE person_info
         SET
-            <if test="name != null">name = #{name},</if>
-            <if test="gender != null">gender = #{gender},</if>
-            <if test="age != null">age = #{age},</if>
-            <if test="occupation != null">occupation = #{occupation},</if>
-            <if test="departments != null">
-                id = (
-                    SELECT p.id
-                    FROM person p
-                    LEFT JOIN department d ON p.id = d.person_id
-                    WHERE p.name = #{name} AND p.gender = #{gender}
-                    LIMIT 1
-                ),
-            </if>
+        <if test="name != null">name = #{name},</if>
+        <if test="gender != null">gender = #{gender},</if>
+        <if test="age != null">age = #{age},</if>
+        <if test="occupation != null">occupation = #{occupation},</if>
+        <if test="departmentId != null">department_id = #{departmentId}</if>
         WHERE id = #{id}
     </update>
 
     <!-- 根据姓名、性别、年龄、部门（单个）查询个人信息 -->
-    <select id="getPersonsByNameGenderAgeDepartment" resultType="com.example.model.Person">
-        SELECT p.id, p.name, p.gender, p.age, p.occupation, d.department_name
-        FROM person p
-        LEFT JOIN department d ON p.id = d.person_id
-        WHERE p.name = #{name}
-        <if test="gender != null">AND p.gender = #{gender}</if>
-        <if test="age != null">AND p.age = #{age}</if>
-        <if test="department != null">AND d.department_name = #{department}</if>
+    <select id="selectPersonsByConditions" resultType="com.example.nowcoder.entity.PersonInfo">
+        SELECT id, name, gender, age, occupation, department_id, is_deleted
+        FROM person_info
+        WHERE
+        <if test="name != null">name = #{name}</if>
+        <if test="gender != null">AND gender = #{gender}</if>
+        <if test="age != null">AND age = #{age}</if>
+        <if test="department != null">AND department_id IN (SELECT id FROM department_info WHERE department_name = #{department})</if>
     </select>
-</mapper>
+
+    <select id="selectPersonsByConditionsLimited" resultType="com.example.nowcoder.entity.PersonInfo">
+        SELECT p.id, p.name, p.gender, p.age, p.occupation, d.department_name
+        FROM person_info p
+        LEFT JOIN department_info d ON p.department_id = d.id
+        WHERE 1=1
+        <if test="name != null and name != ''">AND p.name = #{name}</if>
+        <if test="gender != null and gender != ''">AND p.gender = #{gender}</if>
+        <if test="age != null">AND p.age = #{age}</if>
+        <if test="department != null and department != ''">AND d.department_name = #{department}</if>
+        order by p.id
+        LIMIT #{offSet}, #{pagesize}
+    </select>
 ```
 
 请注意，为了实现逻辑删除，我们在`person`表中添加了一个`is_deleted`字段，用于标记是否已删除。默认值为0（未删除），当执行删除操作时，将该字段的值设为1。
