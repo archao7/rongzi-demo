@@ -35,7 +35,7 @@ public class PersonalInfoService {
     }
 
     public int softDeletePerson(PersonInfo personInfo){
-        if(personInfo.getName() == null){
+        if(personInfo.getName() == null || personInfo.getDepartmentId() == null){
             return 0;
         }
         try {

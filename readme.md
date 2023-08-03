@@ -2,6 +2,12 @@
 
 ![image-20230803133922516](/Users/arches/Library/Application Support/typora-user-images/image-20230803133922516.png)
 
+![image-20230803135308153](/Users/arches/Library/Application Support/typora-user-images/image-20230803135308153.png)
+
+![image-20230803140202535](/Users/arches/Library/Application Support/typora-user-images/image-20230803140202535.png)
+
+![image-20230803140540389](/Users/arches/Library/Application Support/typora-user-images/image-20230803140540389.png)
+
 
 
 # demo说明文档
@@ -24,7 +30,8 @@ CREATE TABLE person (
     name VARCHAR(100) NOT NULL,
     gender VARCHAR(10) NOT NULL,
     age INT,
-    occupation VARCHAR(100)
+    occupation VARCHAR(100),
+    is_deleted BOOLEAN DEFAULT false
 );
 
 -- 创建 department 表
@@ -129,101 +136,22 @@ public class Person {
 
 请注意，为了实现逻辑删除，我们在`person`表中添加了一个`is_deleted`字段，用于标记是否已删除。默认值为0（未删除），当执行删除操作时，将该字段的值设为1。
 
+当进行查询时，我们可以在Mapper接口中对输入参数进行非空校验，**并在XML配置文件中使用MyBatis的动态SQL来处理条件**。下面是对查询接口进行非空校验的示例代码：
+
+在上述代码中，我们在查询接口中对输入参数 `name`、`gender`、`age` 和 `department` 进行了非空校验。在XML配置文件中，我们使用MyBatis的动态SQL来根据条件动态拼接SQL查询语句。
+
 以上就是实现个人信息的增加、删除、修改、查询功能的SQL命令以及对应的MyBatis Mapper接口和XML配置文件的示例。在实际应用中，你需要根据具体的数据库和业务需求进行适当的调整和扩展。
 
 
 
-为了满足要求，需要在插入语句中增加唯一性约束，并在插入时进行重复性检查。唯一性约束可以通过在数据库表中的列上添加`唯一索引`来实现。
+为了提高查询效率，添加唯一索引以及在插入时检查重复性。
 
-下面是对于`person`表的修改，包括添加唯一索引以及在插入时检查重复性。
-
-**1. 修改 `person` 表：**
+**修改 `person` 表：**
 
 ```sql
-sqlCopy code
 -- 添加唯一索引
-CREATE UNIQUE INDEX idx_person_name_gender ON person (name, gender);
+CREATE UNIQUE INDEX idx_person_name ON person (name);
 ```
-
-**2. SQL命令：**
-
-```xml
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper
-  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-
-<mapper namespace="com.example.mapper.PersonMapper">
-    <!-- 添加个人信息 -->
-    <insert id="insertPerson" parameterType="com.example.model.Person">
-        INSERT INTO person (name, gender, age, occupation)
-        VALUES (#{name}, #{gender}, #{age}, #{occupation})
-    </insert>
-</mapper>
-```
-
-**3. Mapper接口和Person类：**
-
-```java
-public interface PersonMapper {
-    // 添加个人信息
-    int insertPerson(Person person);
-}
-javaCopy code
-public class Person {
-    private int id;
-    private String name;
-    private String gender;
-    private Integer age;
-    private String occupation;
-    // Getters and setters
-}
-```
-
-在上述代码中，我们在`name`和`gender`字段上添加了唯一索引 `idx_person_name_gender`，这将确保在`person`表中不会存在相同姓名和性别的记录。当试图插入重复的姓名和性别时，数据库会抛出唯一性约束违反的异常，从而导致插入操作失败。
-
-请注意，这里的实现是基于数据库的唯一索引，这样可以在数据库层面确保唯一性。同时，还需要在应用层面对插入操作的结果进行适当的处理，以便返回新增成功或失败的信息给用户。
-
-
-
-当进行查询时，我们可以在Mapper接口中对输入参数进行非空校验，并在XML配置文件中使用MyBatis的动态SQL来处理条件。下面是对查询接口进行非空校验的示例代码：
-
-**1. XML配置文件 `PersonMapper.xml`：**
-
-```xml
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper
-  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-
-<mapper namespace="com.example.mapper.PersonMapper">
-    <!-- 添加个人信息 -->
-    <insert id="insertPerson" parameterType="com.example.model.Person">
-        INSERT INTO person (name, gender, age, occupation)
-        VALUES (#{name}, #{gender}, #{age}, #{occupation})
-    </insert>
-
-    <!-- ... 其他 SQL 配置 ... -->
-
-    <!-- 根据姓名、性别、年龄、部门（单个）查询个人信息 -->
-    <select id="getPersonsByNameGenderAgeDepartment" resultType="com.example.model.Person">
-        SELECT p.id, p.name, p.gender, p.age, p.occupation, d.department_name
-        FROM person p
-        LEFT JOIN department d ON p.id = d.person_id
-        WHERE 1=1
-        <if test="name != null and name != ''">AND p.name = #{name}</if>
-        <if test="gender != null and gender != ''">AND p.gender = #{gender}</if>
-        <if test="age != null">AND p.age = #{age}</if>
-        <if test="department != null and department != ''">AND d.department_name = #{department}</if>
-    </select>
-</mapper>
-```
-
-在上述代码中，我们在查询接口中对输入参数 `name`、`gender`、`age` 和 `department` 进行了非空校验。在XML配置文件中，我们使用MyBatis的动态SQL来根据条件动态拼接SQL查询语句。
-
-请注意，这里的非空校验是基于字符串的非空判断，如果需要对数字等类型进行非空校验，也可以根据具体情况进行相应的处理。
-
-这样，在调用查询接口时，如果输入的参数中有任何一个为null或空字符串，MyBatis会根据条件动态生成SQL语句，只查询满足非空条件的个人信息。这样可以确保查询的结果符合预期，并避免不必要的查询错误。
 
 
 
@@ -236,78 +164,118 @@ public class Person {
 下面是对HomeController的单元测试代码，并添加了注释说明：
 
 ```java
-javaCopy code
-import com.example.nowcoder.entity.PersonInfo;
-import com.example.nowcoder.service.PersonalInfoService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
-
+@RunWith(MockitoJUnitRunner.class)
 public class HomeControllerTest {
 
-    // 使用Mockito创建 PersonalInfoService 的模拟对象
     @Mock
     private PersonalInfoService personalInfoService;
 
-    // 要测试的 HomeController 对象
     @InjectMocks
     private HomeController homeController;
 
-    // 初始化测试环境
-    @BeforeEach
+    @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
+        // 可以在这里初始化一些Mock的行为
     }
 
     @Test
-    public void testInsertWithNameAndGender() {
-        // 模拟输入参数
+    public void testInsert_NoName() {
+        PersonInfo personInfo = new PersonInfo();
+        // 没有姓名和性别
+        String expectedResult = "No name entered.";
+        String result = homeController.insert(personInfo);
+        assertEquals(expectedResult, result);
+    }
+
+    @Test
+    public void testInsert_NoGender() {
+        PersonInfo personInfo = new PersonInfo();
+        personInfo.setName("John");
+        // 没有性别
+        String expectedResult = "No gender entered";
+        String result = homeController.insert(personInfo);
+        assertEquals(expectedResult, result);
+    }
+
+    @Test
+    public void testInsert_Success() {
         PersonInfo personInfo = new PersonInfo();
         personInfo.setName("John");
         personInfo.setGender("Male");
-
-        // 当调用 personalInfoService.insertPersonInfo() 时返回 true
-        when(personalInfoService.insertPersonInfo(personInfo)).thenReturn(true);
-
-        // 调用被测试的方法
+        // 成功插入
+        when(personalInfoService.insertPersonInfo(any(PersonInfo.class))).thenReturn(true);
+        String expectedResult = "true";
         String result = homeController.insert(personInfo);
-
-        // 验证结果是否符合预期
-        assertEquals("true", result);
+        assertEquals(expectedResult, result);
     }
 
     @Test
-    public void testInsertWithNoName() {
-        // 模拟输入参数
+    public void testDelete() {
         PersonInfo personInfo = new PersonInfo();
-        personInfo.setGender("Male");
+        // 模拟Service层的返回结果
+        when(personalInfoService.softDeletePerson(any(PersonInfo.class))).thenReturn(1);
 
-        // 调用被测试的方法
-        String result = homeController.insert(personInfo);
+        int expectedResult = 1;
+        int result = homeController.delete(personInfo);
+        assertEquals(expectedResult, result);
 
-        // 验证结果是否符合预期
-        assertEquals("No name entered.", result);
+        // 验证Controller是否正确调用了Service层的方法
+        verify(personalInfoService, times(1)).softDeletePerson(personInfo);
     }
 
     @Test
-    public void testInsertWithNoGender() {
-        // 模拟输入参数
+    public void testUpdate() {
         PersonInfo personInfo = new PersonInfo();
-        personInfo.setName("John");
+        // 模拟Service层的返回结果
+        when(personalInfoService.updatePersonInfo(any(PersonInfo.class))).thenReturn(1);
 
-        // 调用被测试的方法
-        String result = homeController.insert(personInfo);
+        int expectedResult = 1;
+        int result = homeController.update(personInfo);
+        assertEquals(expectedResult, result);
 
-        // 验证结果是否符合预期
-        assertEquals("No gender entered", result);
+        // 验证Controller是否正确调用了Service层的方法
+        verify(personalInfoService, times(1)).updatePersonInfo(personInfo);
     }
 
-    // 其他方法的测试类似，可以模拟 personalInfoService 的返回值，验证结果是否符合预期
+    @Test
+    public void testSelectPersonsByConditions() {
+        String name = "John";
+        String gender = "Male";
+        int age = 30;
+        String department = "Engineering";
+
+        // 模拟Service层的返回结果
+        List<PersonInfo> mockResult = new ArrayList<>();
+        mockResult.add(new PersonInfo("John", "Male", 30, "Engineer", 2));
+        when(personalInfoService.selectPersonsByConditions(name, gender, age, department)).thenReturn(mockResult);
+
+        List<PersonInfo> result = homeController.selectPersonsByConditions(name, gender, age, department);
+        assertEquals(mockResult, result);
+
+        // 验证Controller是否正确调用了Service层的方法
+        verify(personalInfoService, times(1)).selectPersonsByConditions(name, gender, age, department);
+    }
+
+    @Test
+    public void testSelectPersonsByConditionsLimited() {
+        String name = "John";
+        String gender = "Male";
+        int age = 30;
+        String department = "Engineering";
+        int pageNum = 1;
+        int pageSize = 10;
+
+        // 模拟Service层的返回结果
+        List<PersonInfo> mockResult = new ArrayList<>();
+        mockResult.add(new PersonInfo("John", "Male", 30, "Engineer", 2));
+        when(personalInfoService.selectPersonsByConditionsLimited(name, gender, age, department, pageNum, pageSize)).thenReturn(mockResult);
+
+        List<PersonInfo> result = homeController.selectPersonsByConditionsLimited(name, gender, age, department, pageNum, pageSize);
+        assertEquals(mockResult, result);
+
+        // 验证Controller是否正确调用了Service层的方法
+        verify(personalInfoService, times(1)).selectPersonsByConditionsLimited(name, gender, age, department, pageNum, pageSize);
+    }
 }
 ```
 
