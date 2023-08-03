@@ -17,7 +17,6 @@ public class HomeController {
     @Autowired
     private PersonalInfoService personalInfoService;
 
-
     @RequestMapping(path = "/insert", method = RequestMethod.GET)
     @ResponseBody
     public String insert(PersonInfo personInfo){
@@ -45,5 +44,12 @@ public class HomeController {
     @ResponseBody
     public List<PersonInfo> selectPersonsByConditions( String name, String gender, Integer age, String department){
         return personalInfoService.selectPersonsByConditions(name, gender, age, department);
+    }
+
+    @RequestMapping(path = "/selectLimited", method = RequestMethod.GET)
+    @ResponseBody
+    public List<PersonInfo> selectPersonsByConditionsLimited(String name, String gender, Integer age, String department,
+                                                              Integer pageNum, Integer pagesize){
+        return personalInfoService.selectPersonsByConditionsLimited(name, gender, age, department, pageNum, pagesize);
     }
 }

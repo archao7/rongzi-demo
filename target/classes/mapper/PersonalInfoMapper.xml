@@ -39,4 +39,17 @@
         <if test="department != null">AND department_id IN (SELECT id FROM department_info WHERE department_name = #{department})</if>
     </select>
 
+    <select id="selectPersonsByConditionsLimited" resultType="com.example.nowcoder.entity.PersonInfo">
+        SELECT p.id, p.name, p.gender, p.age, p.occupation, d.department_name
+        FROM person_info p
+        LEFT JOIN department_info d ON p.department_id = d.id
+        WHERE 1=1
+        <if test="name != null and name != ''">AND p.name = #{name}</if>
+        <if test="gender != null and gender != ''">AND p.gender = #{gender}</if>
+        <if test="age != null">AND p.age = #{age}</if>
+        <if test="department != null and department != ''">AND d.department_name = #{department}</if>
+        order by p.id
+        LIMIT #{offSet}, #{pagesize}
+    </select>
+
 </mapper>

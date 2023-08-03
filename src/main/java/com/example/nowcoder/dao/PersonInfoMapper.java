@@ -20,5 +20,9 @@ public interface PersonInfoMapper {
     // 根据姓名、性别、年龄、部门（单个）查询个人信息
     List<PersonInfo> selectPersonsByConditions(String name, String gender, Integer age, String department);
 
+    // 根据姓名、性别、年龄、部门（单个）查询个人信（分页）
+    List<PersonInfo> selectPersonsByConditionsLimited(String name, String gender, Integer age, String department,
+                                                      Integer offSet, Integer pagesize);
+
 }
 
