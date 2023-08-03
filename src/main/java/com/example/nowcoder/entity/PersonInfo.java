@@ -15,6 +15,14 @@ public class PersonInfo {
     public PersonInfo() {
     }
 
+    public PersonInfo(String name, String gender, Integer age, String occupation, Integer departmentId){
+        this.name = name;
+        this.gender = gender;
+        this.age = age;
+        this.occupation = occupation;
+        this.departmentId = departmentId;
+    }
+
     public PersonInfo(int id, String name, String gender, Integer age, String occupation, Integer departmentId) {
         this.id = id;
         this.name = name;
